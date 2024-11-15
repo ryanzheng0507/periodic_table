@@ -13,14 +13,14 @@ echo "I could not find that element in the database."
 fi
 elif [[ $1 =~ [A-Z] ]] || [[ $1 =~ [A-Z][a-z] ]]
 then
-ATOMIC_NUMBER=$($PSQL "SELECT atomic_number FROM elements WHERE symbol = $1")
+ATOMIC_NUMBER=$($PSQL "SELECT atomic_number FROM elements WHERE symbol = '$1'")
 if [[ -z $ATOMIC_NUMBER ]]
 then
 echo "I could not find that element in the database."
 fi
 elif [[ $1 =~ [A-Z][a-z]+ ]]
 then
-ATOMIC_NUMBER=$($PSQL "SELECT atomic_number FROM elements WHERE name = $1")
+ATOMIC_NUMBER=$($PSQL "SELECT atomic_number FROM elements WHERE name = '$1'")
 if [[ -z $ATOMIC_NUMBER ]]
 then
 echo "I could not find that element in the database."
@@ -39,5 +39,24 @@ TYPE_FORMATTED=$(echo $TYPE | sed -r 's/^ *| *$//g')
 ATOMIC_SYMBOL=$($PSQL "SELECT symbol FROM elements WHERE atomic_number = $ATOMIC_NUMBER")
 SYMBOL_FORMATTED=$(echo $ATOMIC_SYMBOL | sed -r 's/^ *| *$//g')
 echo "The element with atomic number $ATOMIC_NUMBER is $NAME_FORMATTED ($SYMBOL_FORMATTED). It's a $TYPE_FORMATTED, with a mass of $ATOMIC_MASS amu. $NAME_FORMATTED has a melting point of $MELTING_POINT_CELSIUS celsius and a boiling point of $BOILING_POINT_CELSIUS celsius."
+fi
+done
+
+ELEMENTS_TABLE=$($PSQL "SELECT * FROM elements ORDER BY atomic_number")
+echo "$ELEMENTS_TABLE" | while read ATOMIC_NUMBER BAR SYMBOL BAR NAME
+do
+if [[ $SYMBOL = "$1" ]]
+then
+NAME_FORMATTED=$(echo $NAME | sed -r 's/^ *| *$//g')
+TYPE=$($PSQL "SELECT type FROM types INNER JOIN properties USING(type_id) WHERE atomic_number = $ATOMIC_NUMBER")
+TYPE_FORMATTED=$(echo $TYPE | sed -r 's/^ *| *$//g')
+SYMBOL_FORMATTED=$(echo $SYMBOL | sed -r 's/^ *| *$//g')
+ATOMIC_MASS=$($PSQL "SELECT atomic_mass FROM properties WHERE atomic_number = $ATOMIC_NUMBER")
+MASS_FORMATTED=$(echo $ATOMIC_MASS | sed -r 's/^ *| *$//g')
+MELTING_POINT_CELSIUS=$($PSQL "SELECT melting_point_celsius FROM properties WHERE atomic_number = $ATOMIC_NUMBER")
+MELTING_FORMATTED=$(echo $MELTING_POINT_CELSIUS | sed -r 's/^ *| *$//g')
+BOILING_POING_CELSIUS=$($PSQL "SELECT boiling_point_celsius FROM properties WHERE atomic_number = $ATOMIC_NUMBER")
+BOILING_FORMATTED=$(echo $BOILING_POING_CELSIUS | sed -r 's/^ *| *$//g')
+echo "The element with atomic number $ATOMIC_NUMBER is $NAME_FORMATTED ($SYMBOL_FORMATTED). It's a $TYPE_FORMATTED, with a mass of $MASS_FORMATTED amu. $NAME_FORMATTED has a melting point of $MELTING_FORMATTED celsius and a boiling point of $BOILING_FORMATTED celsius."
 fi
 done
